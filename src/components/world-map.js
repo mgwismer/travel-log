@@ -4,7 +4,7 @@ import { geoEqualEarth, geoPath } from "d3-geo"
 import { feature } from "topojson-client"
 import worldMap from '../assets/maps/world-110m.json';
 import { SelectYear } from './select-year';
-import { isReturnStatement } from '@babel/types';
+import './world-map.scss';
 
 // hard-coded data
 const westportCoordinates = [-73.3, 41.1];
@@ -19,7 +19,7 @@ const arcPath = {
 
 export const WorldMap = () => {
   const [geographies, setGeographies] = useState([])
-  const [yearInLife, setYearInLife] = useState('')
+  const [yearInLife, setYearInLife] = useState('1964')
 
   const rotationAngle = useMemo(() => {
     if (yearInLife === '1964') {
@@ -38,6 +38,7 @@ export const WorldMap = () => {
     .clipAngle(100)
     .precision(.5);
 
+  const geoGenerator = geoPath().projection(projection)
   const mapParameters = useMemo(() => {
     if (yearInLife === '1964') {
       return {
@@ -68,32 +69,15 @@ export const WorldMap = () => {
       locations: []
     }
   },[yearInLife])
-  const proj = d3.geoOrthographic()
-  .rotate(rotationAngle)
-  .scale(500 / 2.1)
-  .translate([600 / 2, 500 / 2])
-  .clipAngle(100)
-  .precision(.5);
-
-  const geoGenerator = geoPath().projection(proj)
-  // const geoGenerator = () => {
-  //   const proj = d3.geoOrthographic()
-  //     .rotate(rotationAngle)
-  //     .scale(500 / 2.1)
-  //     .translate([600 / 2, 500 / 2])
-  //     .clipAngle(100)
-  //     .precision(.5);
-  //   return geoPath().projection(proj);
-  // }
 
   useEffect(() => {
     const wfeatures = feature(worldMap, worldMap.objects.countries).features;
     setGeographies(wfeatures);
-  }, [rotationAngle])
+  }, [])
 
   return (
-    <React.Fragment>
-      <svg width={ 800 } height={ 450 } viewBox="0 0 800 450">
+    <div className='world-container'>
+      <svg width={ 600 } height={ 450 } viewBox="0 0 800 450">
         <g className="countries">
           {
             geographies.map((d,i) => {
@@ -120,18 +104,20 @@ export const WorldMap = () => {
               className="marker"
             />
           )}
-          {/* <path
+          <path
             d={mapParameters.path}
             strokeWidth = { 2 }
             stroke = "#AA5678"
             fill="none"
-          /> */}
+          />
         </g>
       </svg>
-      <SelectYear
-        year={yearInLife}
-        changeYear={() => setYearInLife} 
-      />
-    </React.Fragment>
+      <div className='select-year'>
+        <SelectYear
+          year={yearInLife}
+          changeYear={setYearInLife} 
+        />
+      </div>
+    </div>
   )
 }
