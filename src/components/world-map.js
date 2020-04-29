@@ -20,23 +20,42 @@ const arcPath = {
 export const WorldMap = () => {
   const [geographies, setGeographies] = useState([])
   const [yearInLife, setYearInLife] = useState('1964')
+  const [rotationAngle, setRotationAngle] = useState([90, 0, 0])
+  const [finalAngle, setFinalAngle] = useState([0,0,0]);
+  const [myInterval, setMyInterval] = useState(() => {});
+  const [newArcPath, setNewArcPath] = useState({});
 
-  const rotationAngle = useMemo(() => {
-    if (yearInLife === '1964') {
-      return [90, -30, 0]
+  const handleYearChange = (year) => {
+    let currentAngle = rotationAngle;
+    let i = 0;
+    setYearInLife(year);
+    if (year === '1964') {
+      setRotationAngle([90, -30, 0])
     }
-    if (yearInLife === '1980') {
-      return [180, -30, 0]
+    if (year === '1980') {
+      setFinalAngle([180, 0, 0]);
+      setMyInterval(setInterval(function tick() { 
+        setRotationAngle([currentAngle[0] + 2*i, 0, 0]); 
+        i++;
+      }, 100))
     }
-    return [90, -30, 0]
-  }, [yearInLife])
+  }
 
-  const projection = d3.geoOrthographic()
-    .rotate(rotationAngle)
-    .scale(500 / 2.1)
-    .translate([600 / 2, 500 / 2])
-    .clipAngle(100)
-    .precision(.5);
+  useEffect(() => {
+    if (rotationAngle[0] === finalAngle[0]) {
+      clearInterval(myInterval)
+      setNewArcPath(arcPath);
+    }
+  }, [rotationAngle, finalAngle, myInterval]);
+
+  const projection = useMemo(() => {
+    return d3.geoOrthographic()
+            .rotate(rotationAngle)
+            .scale(500 / 2.1)
+            .translate([600 / 2, 500 / 2])
+            .clipAngle(100)
+            .precision(.5);
+    }, [rotationAngle])
 
   const geoGenerator = geoPath().projection(projection)
   const mapParameters = useMemo(() => {
@@ -62,13 +81,13 @@ export const WorldMap = () => {
             cy: projection(hiroshimaCoordinates)[1],
           },
         ],
-        path: geoGenerator(arcPath)
+        path: geoGenerator(newArcPath)
       }
     }
     return {
       locations: []
     }
-  },[yearInLife])
+  },[yearInLife, rotationAngle, newArcPath])
 
   useEffect(() => {
     const wfeatures = feature(worldMap, worldMap.objects.countries).features;
@@ -115,7 +134,7 @@ export const WorldMap = () => {
       <div className='select-year'>
         <SelectYear
           year={yearInLife}
-          changeYear={setYearInLife} 
+          changeYear={handleYearChange} 
         />
       </div>
     </div>
